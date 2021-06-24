@@ -2188,7 +2188,7 @@ impl<'a, 'tcx> InferCtxtExt<'tcx> for InferCtxt<'a, 'tcx> {
 
                 let mut parent_predicate = parent_trait_ref.without_const().to_predicate(tcx);
                 let mut data = data;
-                let mut count = 0;
+                let mut redundant = false;
                 seen_requirements.insert(parent_def_id);
                 while let ObligationCauseCode::ImplDerivedObligation(child) = &*data.parent_code {
                     // Skip redundant recursive obligation notes. See `ui/issue-20413.rs`.
@@ -2197,13 +2197,12 @@ impl<'a, 'tcx> InferCtxtExt<'tcx> for InferCtxt<'a, 'tcx> {
                     if seen_requirements.insert(child_def_id) {
                         break;
                     }
-                    count += 1;
+                    redundant = true;
                     data = child;
                     parent_predicate = child_trait_ref.without_const().to_predicate(tcx);
                     parent_trait_ref = child_trait_ref;
                 }
-                if count > 0 {
-                    err.note(&format!("{} redundant requirements hidden", count));
+                if redundant {
                     err.note(&format!(
                         "required because of the requirements on the impl of `{}` for `{}`",
                         parent_trait_ref.print_only_trait_path(),

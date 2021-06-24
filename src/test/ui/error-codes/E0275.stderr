@@ -13,7 +13,6 @@ note: required because of the requirements on the impl of `Foo` for `Bar<Bar<Bar
    |
 LL | impl<T> Foo for T where Bar<T>: Foo {}
    |         ^^^     ^
-   = note: 127 redundant requirements hidden
    = note: required because of the requirements on the impl of `Foo` for `Bar<T>`
 
 error: aborting due to previous error
