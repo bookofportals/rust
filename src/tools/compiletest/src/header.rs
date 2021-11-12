@@ -736,7 +736,7 @@ impl Config {
                 None => false,
             } ||
             match name.strip_prefix("cfg-") {
-                Some(rustc_cfg_name) => util::cfg_has(&self.target_cfg, rustc_cfg_name, maybe_value),
+                Some(rustc_cfg_name) => util::cfg_has(&self.target_cfg, &self.target, rustc_cfg_name, maybe_value),
                 None => false
             };
 

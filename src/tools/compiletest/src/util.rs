@@ -220,46 +220,55 @@ pub fn logv(config: &Config, s: String) {
 /// Parses the output of `rustc --print cfg` into a [`HashMap`] containing
 /// the cfg values for each name. If the name is present with no value,
 /// it is treated as having a value of "".
-pub fn parse_rustc_cfg(rustc_output: String) -> HashMap<String, Vec<String>> {
-    let mut map = HashMap::new();
-
+pub fn parse_rustc_cfg(
+    map: &mut HashMap<(String, String), Vec<String>>,
+    target: &str,
+    rustc_output: String,
+) {
     for line in rustc_output.lines() {
         if let Some((name, value)) = line.split_once('=') {
             let normalized_value = value.trim_matches('"');
-            cfg_add(&mut map, name, normalized_value);
+            cfg_add(map, target, name, normalized_value);
         } else {
-            cfg_add(&mut map, line, "");
+            cfg_add(map, target, line, "");
         }
     }
-
-    return map;
 }
 
 /// Adds the given name and value to the provided cfg [`HashMap`]. If the `name` already
 /// points to a vector, this adds `value` to the vector. If `name` does not point
 /// to a vector, this adds a new vector containing only `value` to the [`HashMap`].
-fn cfg_add(map: &mut HashMap<String, Vec<String>>, name: &str, value: &str) {
+fn cfg_add(
+    map: &mut HashMap<(String, String), Vec<String>>,
+    target: &str,
+    name: &str,
+    value: &str,
+) {
+    let target = target.to_string();
     let name = name.to_string();
     let value = value.to_string();
+    let target_name = (target.to_string(), name.to_string());
 
-    if let Some(values) = map.get_mut(&name) {
+    if let Some(values) = map.get_mut(&target_name) {
         values.push(value.to_string());
     } else {
-        map.insert(name, vec![value.to_string()]);
+        map.insert(target_name, vec![value.to_string()]);
     }
 }
 
 /// Checks if the cfg HashMap has the given `name`. If the `required_value` is
 /// `Some(value)`, this will only return `true` if `name` is associated with `value`.
 pub fn cfg_has(
-    map: &HashMap<String, Vec<String>>,
+    map: &HashMap<(String, String), Vec<String>>,
+    target: &str,
     name: &str,
     required_value: Option<&str>,
 ) -> bool {
+    let target = target.to_string();
     let name = name.replace("-", "_");
-    let required_value = required_value.map(str::trim).map(str::to_string);
+    let required_value = required_value.map(|v| v.trim().to_string());
 
-    match (map.get(&name), required_value) {
+    match (map.get(&(target, name)), required_value) {
         (None, _) => false,
         (Some(_), None) => true,
         (Some(values), Some(required_value)) => values.contains(&required_value),

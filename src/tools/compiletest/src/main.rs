@@ -217,16 +217,27 @@ pub fn parse_config(args: Vec<String>) -> Config {
         false
     };
 
-    let target_cfg = if cfg!(test) {
-        HashMap::new()
-    } else {
-        let rustc_cfg_data = Command::new(&rustc_path)
-            .args(&["--target", &target])
-            .args(&["--print", "cfg"])
-            .output()
-            .unwrap()
-            .stdout;
-        util::parse_rustc_cfg(String::from_utf8(rustc_cfg_data).unwrap())
+    let mut target_cfg = HashMap::new();
+
+    if !cfg!(test) {
+        let target_list =
+            Command::new(&rustc_path).args(&[&"--print", &"target-list"]).output().unwrap().stdout;
+        let target_list = String::from_utf8(target_list).unwrap();
+        let targets = target_list.lines().collect::<Vec<_>>();
+
+        for target in targets {
+            let rustc_cfg_data = Command::new(&rustc_path)
+                .args(&["--target", &target])
+                .args(&["--print", "cfg"])
+                .output()
+                .unwrap()
+                .stdout;
+            util::parse_rustc_cfg(
+                &mut target_cfg,
+                &target,
+                String::from_utf8(rustc_cfg_data).unwrap(),
+            )
+        }
     };
 
     Config {

@@ -278,7 +278,7 @@ pub struct Config {
 
     /// A map from target cfg keys to their values. If the key is present with no value,
     /// the vector will contain the empty string.
-    pub target_cfg: HashMap<String, Vec<String>>,
+    pub target_cfg: HashMap<(String, String), Vec<String>>,
 
     /// Target system to be tested
     pub target: String,
